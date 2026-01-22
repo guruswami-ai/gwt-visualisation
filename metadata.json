@@ -1,0 +1,5 @@
+{
+  "name": "Genomic Weights Experiment Visualisation",
+  "description": "A real-time visualization of evolutionary strategies (Direct, Flat, Hierarchical, Topological) exploring genomic compression theories.",
+  "requestFramePermissions": []
+}
