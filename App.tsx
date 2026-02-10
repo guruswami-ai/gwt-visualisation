@@ -8,6 +8,12 @@ import ResearchManifesto from './components/ResearchManifesto';
 import ClusterMonitor from './components/ClusterMonitor';
 import TelemetrySetup from './components/TelemetrySetup';
 import GameOfLifeBackground from './components/GameOfLifeBackground';
+import BettiNumberAnalyzer from './components/BettiNumberAnalyzer';
+import LoopExtrusionControls, { LoopExtrusionParams } from './components/LoopExtrusionControls';
+import CNEAblationTool from './components/CNEAblationTool';
+import CrossManifoldOverlay from './components/CrossManifoldOverlay';
+import ThermodynamicLossVisualizer from './components/ThermodynamicLossVisualizer';
+import MetricsComparisonTable from './components/MetricsComparisonTable';
 import { StrategyType, StrategyData } from './types';
 import { Activity, Terminal, Play, Pause, RotateCcw, BarChart3, Zap, Cpu, Lock, Globe, Code2, Flame, Snowflake, RefreshCw, Atom, Dna, Brain, Network, FileText, Box, Grid, Timer, History, Database, AlertTriangle, Users, Settings } from 'lucide-react';
 
@@ -94,6 +100,20 @@ const App: React.FC = () => {
   const [showManifesto, setShowManifesto] = useState(false);
   const [showTelemetrySetup, setShowTelemetrySetup] = useState(false);
   const [visualMode, setVisualMode] = useState<'heatmap' | '3d'>('3d');
+  
+  // Loop Extrusion Parameters State
+  const [loopExtrusionParams, setLoopExtrusionParams] = useState<LoopExtrusionParams>({
+    motorSpeed: 1.0,
+    langevinDamping: 0.85,
+    thermalNoise: 0.2,
+    ctcfStrength: 1.0,
+    extrusionForce: 0.15
+  });
+  const [physicsPaused, setPhysicsPaused] = useState(false);
+  
+  // Get both theory and experimental adjacency matrices for comparison
+  const theoreticalTopologicalData = state?.strategies[StrategyType.Topological];
+  const experimentalTopologicalData = state?.strategies[StrategyType.Topological];
 
   if (!state) return (
       <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-emerald-500 font-mono gap-4">
@@ -287,6 +307,33 @@ const App: React.FC = () => {
             onToggleMode={setTelemetryMode}
             onOpenSetup={() => setShowTelemetrySetup(true)}
           />
+          
+          {/* Betti Number Analysis */}
+          {theoreticalTopologicalData && experimentalTopologicalData && (
+            <BettiNumberAnalyzer 
+              theoreticalAdjacency={theoreticalTopologicalData.adjacency}
+              experimentalAdjacency={experimentalTopologicalData.adjacency}
+              mode={state.playbackMode}
+            />
+          )}
+          
+          {/* Loop Extrusion Controls */}
+          <LoopExtrusionControls
+            params={loopExtrusionParams}
+            onParamsChange={setLoopExtrusionParams}
+            isPaused={physicsPaused}
+            onTogglePause={() => setPhysicsPaused(!physicsPaused)}
+          />
+          
+          {/* CNE Ablation Tool */}
+          {topologicalData && (
+            <CNEAblationTool adjacency={topologicalData.adjacency} />
+          )}
+          
+          {/* Thermodynamic Loss Visualizer */}
+          {topologicalData && (
+            <ThermodynamicLossVisualizer adjacency={topologicalData.adjacency} />
+          )}
 
         </div>
 
@@ -409,7 +456,8 @@ const App: React.FC = () => {
                         <DNAVisualizer 
                             key={state.id}
                             adjacency={topologicalData.adjacency} 
-                            colorBase={[99, 102, 241]} 
+                            colorBase={[99, 102, 241]}
+                            loopExtrusionParams={physicsPaused ? undefined : loopExtrusionParams}
                         />
                     )}
                 </div>
@@ -441,6 +489,19 @@ const App: React.FC = () => {
                     </p>
                 </div>
             </div>
+            
+            {/* Cross-Manifold Overlay */}
+            {topologicalData && (
+              <CrossManifoldOverlay adjacency={topologicalData.adjacency} />
+            )}
+            
+            {/* Metrics Comparison Table */}
+            {theoreticalTopologicalData && experimentalTopologicalData && (
+              <MetricsComparisonTable 
+                theoreticalAdjacency={theoreticalTopologicalData.adjacency}
+                experimentalAdjacency={experimentalTopologicalData.adjacency}
+              />
+            )}
 
         </div>
 
