@@ -20,6 +20,13 @@ const SphereGeometry = 'sphereGeometry' as any;
 interface DNAVisualizerProps {
   adjacency: number[][];
   colorBase: [number, number, number];
+  loopExtrusionParams?: {
+    motorSpeed: number;
+    langevinDamping: number;
+    thermalNoise: number;
+    ctcfStrength: number;
+    extrusionForce: number;
+  };
 }
 
 interface SimulationProps extends DNAVisualizerProps {
@@ -195,9 +202,16 @@ const ChromatinSpaghetti = ({
 };
 
 
-const PolymerSimulation = ({ adjacency, colorBase, paused, speed, nodeSize }: SimulationProps) => {
+const PolymerSimulation = ({ adjacency, colorBase, paused, speed, nodeSize, loopExtrusionParams }: SimulationProps) => {
   const positions = useRef<THREE.Vector3[]>([]);
   const velocities = useRef<THREE.Vector3[]>([]);
+  
+  // Use provided parameters or defaults
+  const effectiveDamping = loopExtrusionParams?.langevinDamping ?? DAMPING;
+  const effectiveThermalNoise = loopExtrusionParams?.thermalNoise ?? 0.2;
+  const effectiveCtcfStrength = loopExtrusionParams?.ctcfStrength ?? 1.0;
+  const effectiveExtrusionForce = loopExtrusionParams?.extrusionForce ?? 0.15;
+  const effectiveMotorSpeed = loopExtrusionParams?.motorSpeed ?? 1.0;
   
   const extrusionState = useRef({
       active: true,
@@ -236,7 +250,8 @@ const PolymerSimulation = ({ adjacency, colorBase, paused, speed, nodeSize }: Si
     const ext = extrusionState.current;
     
     // Speed directly affects how fast the motor steps occur
-    ext.timer += speed; 
+    // Apply motorSpeed parameter
+    ext.timer += speed * effectiveMotorSpeed; 
     
     // Threshold is constant (5 frames at 1x speed). 
     // Higher speed = reach threshold faster = faster extrusion.
@@ -244,10 +259,11 @@ const PolymerSimulation = ({ adjacency, colorBase, paused, speed, nodeSize }: Si
         ext.timer = 0;
         let stalled = false;
         
-        if (ext.leftFoot > 0 && !BOUNDARIES.includes(ext.leftFoot)) ext.leftFoot--;
+        // CTCF boundaries with strength parameter
+        if (ext.leftFoot > 0 && (!BOUNDARIES.includes(ext.leftFoot) || Math.random() > effectiveCtcfStrength * 0.5)) ext.leftFoot--;
         else stalled = true;
 
-        if (ext.rightFoot < NUM_PARTICLES - 1 && !BOUNDARIES.includes(ext.rightFoot)) ext.rightFoot++;
+        if (ext.rightFoot < NUM_PARTICLES - 1 && (!BOUNDARIES.includes(ext.rightFoot) || Math.random() > effectiveCtcfStrength * 0.5)) ext.rightFoot++;
         else stalled = true;
         
         if (stalled || (ext.rightFoot - ext.leftFoot) > 32) {
@@ -331,8 +347,8 @@ const PolymerSimulation = ({ adjacency, colorBase, paused, speed, nodeSize }: Si
       
       // E. Motor Force (Loop Extrusion)
       if (ext.active) {
-          // Pull feet together
-          const motorStrength = 0.08; 
+          // Pull feet together with configurable strength
+          const motorStrength = 0.08 * effectiveMotorSpeed; 
           
           if (i === ext.leftFoot) {
               scratch.diff.subVectors(pos[ext.rightFoot], pos[i]);
@@ -353,18 +369,28 @@ const PolymerSimulation = ({ adjacency, colorBase, paused, speed, nodeSize }: Si
              // Add artificial "up" bias to ensure it pops out of the coil
              scratch.diff.y += 10.0;
              
-             // Strong push
-             scratch.diff.normalize().multiplyScalar(0.15); 
+             // Strong push with configurable force
+             scratch.diff.normalize().multiplyScalar(effectiveExtrusionForce); 
              scratch.force.add(scratch.diff);
           }
+      }
+      
+      // Add thermal noise (Langevin dynamics)
+      if (effectiveThermalNoise > 0) {
+          scratch.vec.set(
+              (Math.random() - 0.5) * effectiveThermalNoise,
+              (Math.random() - 0.5) * effectiveThermalNoise,
+              (Math.random() - 0.5) * effectiveThermalNoise
+          );
+          scratch.force.add(scratch.vec);
       }
 
       // --- INTEGRATION ---
       // Apply forces
       vel[i].add(scratch.force.multiplyScalar(speed * 0.5)); 
       
-      // Damping 
-      vel[i].multiplyScalar(DAMPING); 
+      // Damping with configurable parameter
+      vel[i].multiplyScalar(effectiveDamping); 
 
       // Strict Velocity Clamp
       const vSq = vel[i].lengthSq();
@@ -412,6 +438,9 @@ const DNAVisualizer: React.FC<DNAVisualizerProps> = (props) => {
         controlsRef.current.reset(); // Resets Camera to initial position
     }
   };
+  
+  // Pass loopExtrusionParams through to simulation
+  const effectiveParams = props.loopExtrusionParams;
 
   return (
     <div className="w-full h-full bg-white relative rounded overflow-hidden shadow-inner group border border-slate-200">
@@ -443,7 +472,8 @@ const DNAVisualizer: React.FC<DNAVisualizerProps> = (props) => {
             {...props} 
             paused={paused} 
             speed={speed} 
-            nodeSize={nodeSize} 
+            nodeSize={nodeSize}
+            loopExtrusionParams={effectiveParams}
         />
         
         <OrbitControls 
