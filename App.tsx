@@ -13,6 +13,7 @@ import LoopExtrusionControls, { LoopExtrusionParams } from './components/LoopExt
 import CNEAblationTool from './components/CNEAblationTool';
 import CrossManifoldOverlay from './components/CrossManifoldOverlay';
 import ThermodynamicLossVisualizer from './components/ThermodynamicLossVisualizer';
+import MetricsComparisonTable from './components/MetricsComparisonTable';
 import { StrategyType, StrategyData } from './types';
 import { Activity, Terminal, Play, Pause, RotateCcw, BarChart3, Zap, Cpu, Lock, Globe, Code2, Flame, Snowflake, RefreshCw, Atom, Dna, Brain, Network, FileText, Box, Grid, Timer, History, Database, AlertTriangle, Users, Settings } from 'lucide-react';
 
@@ -492,6 +493,14 @@ const App: React.FC = () => {
             {/* Cross-Manifold Overlay */}
             {topologicalData && (
               <CrossManifoldOverlay adjacency={topologicalData.adjacency} />
+            )}
+            
+            {/* Metrics Comparison Table */}
+            {theoreticalTopologicalData && experimentalTopologicalData && (
+              <MetricsComparisonTable 
+                theoreticalAdjacency={theoreticalTopologicalData.adjacency}
+                experimentalAdjacency={experimentalTopologicalData.adjacency}
+              />
             )}
 
         </div>
