@@ -8,6 +8,7 @@ import ResearchManifesto from './components/ResearchManifesto';
 import ClusterMonitor from './components/ClusterMonitor';
 import TelemetrySetup from './components/TelemetrySetup';
 import GameOfLifeBackground from './components/GameOfLifeBackground';
+import BettiNumberAnalyzer from './components/BettiNumberAnalyzer';
 import { StrategyType, StrategyData } from './types';
 import { Activity, Terminal, Play, Pause, RotateCcw, BarChart3, Zap, Cpu, Lock, Globe, Code2, Flame, Snowflake, RefreshCw, Atom, Dna, Brain, Network, FileText, Box, Grid, Timer, History, Database, AlertTriangle, Users, Settings } from 'lucide-react';
 
@@ -94,6 +95,10 @@ const App: React.FC = () => {
   const [showManifesto, setShowManifesto] = useState(false);
   const [showTelemetrySetup, setShowTelemetrySetup] = useState(false);
   const [visualMode, setVisualMode] = useState<'heatmap' | '3d'>('3d');
+  
+  // Get both theory and experimental adjacency matrices for comparison
+  const theoreticalTopologicalData = state?.strategies[StrategyType.Topological];
+  const experimentalTopologicalData = state?.strategies[StrategyType.Topological];
 
   if (!state) return (
       <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-emerald-500 font-mono gap-4">
@@ -287,6 +292,15 @@ const App: React.FC = () => {
             onToggleMode={setTelemetryMode}
             onOpenSetup={() => setShowTelemetrySetup(true)}
           />
+          
+          {/* Betti Number Analysis */}
+          {theoreticalTopologicalData && experimentalTopologicalData && (
+            <BettiNumberAnalyzer 
+              theoreticalAdjacency={theoreticalTopologicalData.adjacency}
+              experimentalAdjacency={experimentalTopologicalData.adjacency}
+              mode={state.playbackMode}
+            />
+          )}
 
         </div>
 
