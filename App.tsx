@@ -12,6 +12,7 @@ import BettiNumberAnalyzer from './components/BettiNumberAnalyzer';
 import LoopExtrusionControls, { LoopExtrusionParams } from './components/LoopExtrusionControls';
 import CNEAblationTool from './components/CNEAblationTool';
 import CrossManifoldOverlay from './components/CrossManifoldOverlay';
+import ThermodynamicLossVisualizer from './components/ThermodynamicLossVisualizer';
 import { StrategyType, StrategyData } from './types';
 import { Activity, Terminal, Play, Pause, RotateCcw, BarChart3, Zap, Cpu, Lock, Globe, Code2, Flame, Snowflake, RefreshCw, Atom, Dna, Brain, Network, FileText, Box, Grid, Timer, History, Database, AlertTriangle, Users, Settings } from 'lucide-react';
 
@@ -326,6 +327,11 @@ const App: React.FC = () => {
           {/* CNE Ablation Tool */}
           {topologicalData && (
             <CNEAblationTool adjacency={topologicalData.adjacency} />
+          )}
+          
+          {/* Thermodynamic Loss Visualizer */}
+          {topologicalData && (
+            <ThermodynamicLossVisualizer adjacency={topologicalData.adjacency} />
           )}
 
         </div>
