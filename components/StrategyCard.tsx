@@ -4,7 +4,7 @@ import { StrategyData, StrategyType } from '../types';
 import Heatmap from './Heatmap';
 import FitnessChart from './FitnessChart';
 import { Activity, GitMerge, Layers, Zap, BrainCircuit, TrendingDown } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, YAxis } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, YAxis, AreaChart, Area, Tooltip } from 'recharts';
 
 interface StrategyCardProps {
   data: StrategyData;
@@ -43,20 +43,35 @@ const STRATEGY_CONFIG: Record<StrategyType, { color: string; rgb: [number, numbe
 
 const VarianceSparkline = ({ data, color }: { data: number[], color: string }) => {
     const chartData = data.map((val, i) => ({ i, val }));
+    const gradientId = `colorVariance-${color.replace('#', '')}`;
     return (
-        <div className="h-6 w-full">
+        <div className="h-12 w-full mt-1">
             <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <AreaChart data={chartData}>
+                    <defs>
+                        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={color} stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                        </linearGradient>
+                    </defs>
                     <YAxis domain={['auto', 'auto']} hide />
-                    <Line 
+                    <Tooltip 
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', fontSize: '10px', color: '#f8fafc', borderRadius: '4px' }}
+                        itemStyle={{ color: color }}
+                        labelStyle={{ display: 'none' }}
+                        formatter={(value: number) => [value.toFixed(4), 'Variance']}
+                        isAnimationActive={false}
+                    />
+                    <Area 
                         type="monotone" 
                         dataKey="val" 
-                        stroke="#94a3b8" 
-                        strokeWidth={1} 
-                        dot={false}
+                        stroke={color} 
+                        fillOpacity={1}
+                        fill={`url(#${gradientId})`}
+                        strokeWidth={2} 
                         isAnimationActive={false} 
                     />
-                </LineChart>
+                </AreaChart>
             </ResponsiveContainer>
         </div>
     );
@@ -101,7 +116,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ data }) => {
       <div className="border-t border-slate-800 pt-2 mt-1">
          <div className="flex justify-between items-center text-[9px] text-slate-500 font-mono mb-1">
              <span className="flex items-center gap-1"><TrendingDown size={10} /> VARIANCE (σ)</span>
-             <span>{data.variance.toFixed(2)}</span>
+             <span className="text-xs font-bold" style={{ color: config.color }}>{data.variance.toFixed(3)}</span>
          </div>
          <VarianceSparkline data={data.varianceHistory} color={config.color} />
       </div>

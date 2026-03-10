@@ -304,7 +304,7 @@ const App: React.FC = () => {
                   <tr className="border-b border-slate-800 text-xs text-slate-500 font-mono text-right">
                     <th className="px-2 py-2 text-left">POLICY</th>
                     <th className="px-2 py-2">RWD(μ)</th>
-                    <th className="px-2 py-2">σ (Std)</th>
+                    <th className="px-2 py-2">σ (Std Dev)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -328,7 +328,12 @@ const App: React.FC = () => {
                           {strat.fitness.toFixed(1)}
                         </td>
                         <td className="px-2 py-2 text-right font-mono text-slate-500">
-                          {stdDev.toFixed(1)}
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                               <div className="h-full transition-all duration-300" style={{ width: `${Math.min(100, stdDev * 100)}%`, backgroundColor: getStrategyColor(strat.type) }} />
+                            </div>
+                            <span className="w-8">{stdDev.toFixed(2)}</span>
+                          </div>
                         </td>
                       </tr>
                     );
